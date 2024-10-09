@@ -1,0 +1,7 @@
+{
+    "success": true,
+    "message": "測試 api 成功",
+    "data": {
+        "text": "成功成功成功"
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "success": true,
+    "message": "成功取得會員資訊",
+    "data": {
+        "id": 201,
+        "email": "test@test.com",
+        "name": "Charley",
+        "pictureUrl": "https://fakeimg.pl/300x300/"
+    }
+}
