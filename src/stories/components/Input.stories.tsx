@@ -7,12 +7,10 @@ import type {
 import Input from '../../components/Input';
 import { ThemeProvider, useTheme } from '../../contexts/ThemeContext';
 import React, { useEffect } from 'react';
+import { FiSearch, FiUser, FiLock } from 'react-icons/fi';
 
 // 同步主題狀態的元件
-const ThemeSyncWrapper: React.FC<{ theme: 'light' | 'dark'; children: React.ReactNode }> = ({
-  theme,
-  children,
-}) => {
+const ThemeSyncWrapper: React.FC<{ theme: 'light' | 'dark'; children: React.ReactNode }> = ({ theme, children }) => {
   const { setIsDarkMode } = useTheme();
 
   useEffect(() => {
@@ -58,10 +56,23 @@ const meta: Meta<typeof Input> = {
       options: ['small', 'medium', 'large'],
       description: '設定 Input 的大小',
     },
-    radius: { // 新增 radius 屬性控制
+    radius: {
       control: { type: 'select' },
       options: ['none', 'small', 'medium', 'large', 'full'],
       description: '設定 Input 的圓角樣式',
+    },
+    icon: {
+      control: false, // 禁用控制面板顯示
+      description: '顯示在輸入框內的圖標',
+    },
+    iconPosition: {
+      control: { type: 'select' },
+      options: ['left', 'right'],
+      description: '設定圖標顯示位置',
+    },
+    showPasswordToggle: {
+      control: 'boolean',
+      description: '是否顯示密碼切換按鈕（僅當類型為 password 時生效）',
     },
     disabled: { control: 'boolean', description: '是否禁用' },
     onChange: { action: 'changed', description: '值變更時觸發的函式' },
@@ -73,7 +84,7 @@ const meta: Meta<typeof Input> = {
     placeholder: '請輸入文字...',
     variant: 'primary',
     size: 'medium',
-    radius: 'medium', // 設定預設圓角樣式
+    radius: 'medium',
     disabled: false,
   },
   parameters: {
@@ -106,6 +117,32 @@ export const LargeInput: Story = { args: { size: 'large', placeholder: 'Large In
 // 圓角樣式範例
 export const FullRoundedInput: Story = { args: { radius: 'full', placeholder: 'Full Rounded Input' } };
 
+// 圖標範例
+export const LeftIconInput: Story = { args: { icon: <FiUser />, placeholder: 'Left Icon Input', iconPosition: 'left' } };
+export const RightIconInput: Story = { args: { icon: <FiSearch />, placeholder: 'Right Icon Input', iconPosition: 'right' } };
+
+// 密碼顯示切換範例
+export const PasswordInputWithToggle: Story = {
+  args: {
+    type: 'password',
+    placeholder: 'Password Input',
+    showPasswordToggle: true,
+    icon: <FiLock />,
+    iconPosition: 'left',
+  },
+};
+
 // 暗黑模式範例
 export const DarkModePrimary: Story = { args: { variant: 'primary', placeholder: 'Dark Mode Primary Input' }, parameters: { backgrounds: { default: 'dark' } } };
 export const DarkModeDanger: Story = { args: { variant: 'danger', placeholder: 'Dark Mode Danger Input' }, parameters: { backgrounds: { default: 'dark' } } };
+
+// read-only 範例
+export const ReadOnlyWithGrayText: Story = {
+  args: {
+    type: 'text',
+    value: 'This is read-only with gray text',
+    placeholder: 'Read-only Input',
+    variant: 'primary',
+    readonly: true,
+  },
+};

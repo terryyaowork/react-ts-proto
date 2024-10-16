@@ -15,6 +15,10 @@ export default [
       ecmaVersion: 2020,
       globals: globals.browser,
       parser: tsParser, // 使用 TypeScript 解析器
+      sourceType: 'module', // 允許使用 ES 模組
+      ecmaFeatures: {
+        tsx: true,
+      },
     },
     plugins: {
       '@typescript-eslint': tseslint,
@@ -26,7 +30,21 @@ export default [
       ...airbnbBestPractices.rules,
       ...airbnbVariables.rules,
       ...airbnbErrors.rules,
-      '@typescript-eslint/no-unused-vars': 'warn',
+
+      // 禁用基礎的 no-unused-vars 規則
+      'no-unused-vars': 'off',
+
+      // 啟用 TypeScript 的 no-unused-vars 規則，並設置忽略模式
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_', // 忽略以 _ 開頭的參數
+          varsIgnorePattern: '^_', // 忽略以 _ 開頭的變量
+          args: 'after-used', // 僅在參數被後續使用時檢查
+          ignoreRestSiblings: true, // 忽略剩餘屬性
+        },
+      ],
+
       'semi': ['error', 'always'], // 確保使用分號
       'quotes': ['error', 'single'], // 使用單引號
       'comma-dangle': ['error', 'always-multiline'], // 強制多行結構使用逗號

@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getColor, getTextColor } from '../utils/getColor'; // 引入顏色工具函式
+import { getColor } from '../utils/getColor';
 import { LIGHT_COLORS } from '../typings/components/base/colors';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 type InputType = 'text' | 'password' | 'email' | 'number' | 'search' | 'tel' | 'url';
 type InputVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark';
 type InputSize = 'small' | 'medium' | 'large';
 type InputRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+type IconPosition = 'left' | 'right';
 
-interface InputProps {
+export interface InputProps {
+  id?: string;
   type?: InputType;
   value?: string;
   placeholder?: string;
@@ -16,7 +19,12 @@ interface InputProps {
   size?: InputSize;
   disabled?: boolean;
   radius?: InputRadius;
-  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  multiline?: boolean;
+  readonly?: boolean;
+  onChange?: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  icon?: React.ReactNode;
+  iconPosition?: IconPosition;
+  showPasswordToggle?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -36,6 +44,7 @@ const sizeStyles: Record<InputSize, string> = {
 };
 
 const Input: React.FC<InputProps> = ({
+  id,
   type = 'text',
   value,
   placeholder,
@@ -43,47 +52,118 @@ const Input: React.FC<InputProps> = ({
   radius = 'medium',
   size = 'medium',
   disabled = false,
+  multiline,
+  readonly = false,
   onChange,
+  icon,
+  iconPosition = 'left',
+  showPasswordToggle = false,
   className = '',
   style,
 }) => {
-  const { isDarkMode } = useTheme(); // 確認當前是否為暗黑模式
-  const borderColor = getColor(
-    variant.toUpperCase() as keyof typeof LIGHT_COLORS,
-    isDarkMode,
-  ); // 取得不同變體的邊框色
-  const textColor = getTextColor(
-    variant.toUpperCase() as keyof typeof LIGHT_COLORS,
-    isDarkMode,
-  ); // 取得文字顏色
-  const focusRingColor = `${borderColor}80`; // 設定 focus 狀態下的 ring 顏色（80 的透明度）
-  const disabledBackgroundColor = `${borderColor}20`; // 設定 disabled 狀態的背景色
+  const { isDarkMode } = useTheme();
+  const borderColor = getColor(variant.toUpperCase() as keyof typeof LIGHT_COLORS, isDarkMode);
+  const textColor = getColor(variant.toUpperCase() as keyof typeof LIGHT_COLORS, isDarkMode);
+  const focusRingColor = `${borderColor}80`;
+  const disabledBackgroundColor = `${borderColor}20`;
+  const readonlyBackgroundColor = isDarkMode ? '#333' : '#f8f9fa';
+  const readonlyBorderColor = 'transparent';
 
   const [isFocused, setIsFocused] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  let inputType: InputType = type;
+  if (type === 'password' && showPasswordToggle) {
+    inputType = isPasswordVisible ? 'text' : 'password';
+  }
+
+  let inputPaddingClass = '';
+  if (icon) {
+    inputPaddingClass = iconPosition === 'left' ? 'pl-9' : 'pr-9';
+  }
+
+  let rightIcon;
+  if (type === 'password' && showPasswordToggle) {
+    rightIcon = isPasswordVisible ? (
+      <FiEyeOff onClick={() => setIsPasswordVisible(false)} />
+    ) : (
+      <FiEye onClick={() => setIsPasswordVisible(true)} />
+    );
+  } else {
+    rightIcon = icon;
+  }
+
+  // 設定 backgroundColor 變數來避免巢狀三元運算子
+  let backgroundColor;
+  if (readonly) {
+    backgroundColor = readonlyBackgroundColor;
+  } else if (disabled) {
+    backgroundColor = disabledBackgroundColor;
+  }
 
   return (
-    <input
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      disabled={disabled}
-      onChange={onChange}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
-      className={`transition-colors duration-200 ease-in-out
-        ${sizeStyles[size]}
-        ${disabled ? 'cursor-not-allowed opacity-50' : ''}
-        ${radiusStyles[radius]} 
-        ${className}`}
-      style={{
-        outline: 'none', // 移除瀏覽器預設的 outline 樣式
-        border: `1px solid ${isFocused ? borderColor : borderColor}`, // 使用手動設定的 `border` 顏色
-        color: disabled ? '#aaa' : textColor, // 調整 disabled 狀態下的文字顏色
-        backgroundColor: disabled ? disabledBackgroundColor : undefined, // 使用自定義背景色
-        boxShadow: isFocused ? `0 0 0 3px ${focusRingColor}` : undefined, // Focus 時的 box-shadow 顯示
-        ...style,
-      }}
-    />
+    <div
+      className={`relative flex items-center ${sizeStyles[size]} ${className}`}
+      style={{ color: disabled ? '#aaa' : textColor, ...style }}
+    >
+      {/* 左側圖標顯示 */}
+      {icon && iconPosition === 'left' && <div className="absolute left-6">{icon}</div>}
+
+      {/* Textarea 元件 */}
+      {multiline ? (
+        <textarea
+          id={id}
+          value={value}
+          placeholder={placeholder}
+          readOnly={readonly}
+          disabled={disabled}
+          onChange={onChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className={`transition-colors duration-200 ease-in-out
+          ${sizeStyles[size]}
+          ${radiusStyles[radius]}
+          ${inputPaddingClass}
+          ${disabled || readonly ? 'cursor-not-allowed opacity-50' : ''}
+          w-full placeholder-opacity-80 placeholder-${variant.toLowerCase()}`}
+          style={{
+            outline: 'none',
+            border: `1px solid ${readonly ? readonlyBorderColor : borderColor}`,
+            backgroundColor,
+            color: textColor,
+            boxShadow: isFocused && !readonly ? `0 0 0 3px ${focusRingColor}` : undefined,
+          }}
+        />
+      ) : (
+        <input
+          id={id}
+          type={inputType}
+          value={value}
+          placeholder={placeholder}
+          readOnly={readonly}
+          disabled={disabled}
+          onChange={onChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className={`transition-colors duration-200 ease-in-out
+          ${sizeStyles[size]}
+          ${radiusStyles[radius]}
+          ${inputPaddingClass}
+          ${disabled || readonly ? 'cursor-not-allowed opacity-50' : ''}
+          w-full placeholder-opacity-80 placeholder-${variant.toLowerCase()}`}
+          style={{
+            outline: 'none',
+            border: `1px solid ${readonly ? readonlyBorderColor : borderColor}`,
+            backgroundColor,
+            color: textColor,
+            boxShadow: isFocused && !readonly ? `0 0 0 3px ${focusRingColor}` : undefined,
+          }}
+        />
+      )}
+
+      {/* 右側圖標顯示 */}
+      {iconPosition === 'right' && <div className="absolute right-6 cursor-pointer">{rightIcon}</div>}
+    </div>
   );
 };
 
